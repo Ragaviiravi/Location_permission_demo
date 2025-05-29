@@ -62,113 +62,145 @@ class LocationPermissionPage extends StatelessWidget {
           final screenWidth = MediaQuery.of(context).size.width;
 
           return Scaffold(
-            appBar: AppBar(title: const Text('Location & Notification Demo')),
+
             body: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1, vertical: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+
                   Container(
-                    color: Colors.grey.shade200,
-                    padding: const EdgeInsets.all(16),
+                    color: Colors.black,
+                    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1, vertical: 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        const Text(
+                          'Test App',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        // Request Location Permission
                         ElevatedButton(
                           onPressed: () => controller.requestLocationPermission(context),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
+                            backgroundColor: const Color(0xFF007AFF), // Blue
+                            foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                           child: const Text('Request Location Permission'),
                         ),
+
                         const SizedBox(height: 20),
+
+
                         ElevatedButton(
                           onPressed: () => controller.requestNotificationPermission(context),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.yellow.shade700,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
+                            backgroundColor: const Color(0xFFFFCC00), // Yellow
+                            foregroundColor: Colors.black,
                             padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                           child: const Text('Request Notification Permission'),
                         ),
-                        const SizedBox(height: 40),
+
+                        const SizedBox(height: 20),
+
+
                         ElevatedButton(
-                          onPressed: controller.updatingLocation
-                              ? null
-                              : () => _confirmStartLocationUpdates(context, controller),
+                          onPressed: () => _confirmStartLocationUpdates(context, controller),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
+                            backgroundColor: const Color(0xFF34C759), // Green
+                            foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                           child: const Text('Start Location Update'),
                         ),
+
                         const SizedBox(height: 20),
+
+
                         ElevatedButton(
-                          onPressed: controller.updatingLocation ? controller.stopLocationUpdates : null,
+                          onPressed: () {
+                            if (controller.updatingLocation) {
+                              controller.stopLocationUpdates();
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Location updates are not active')),
+                              );
+                            }
+                          },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
+                            backgroundColor: const Color(0xFFFF3B30), // Red
+                            foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                           child: const Text('Stop Location Update'),
                         ),
+
                       ],
                     ),
                   ),
-                  const SizedBox(height: 30),
-                  const Text(
-                    'Live Location:',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  Card(
-                    color: Colors.blue.shade50,
-                    child: ListTile(
-                      title: const Text('Latest Location Data'),
-                      subtitle: Text(
-                        controller.currentPosition != null
-                            ? 'Lat: ${controller.currentPosition!.latitude.toStringAsFixed(3)} | '
-                            'Lng: ${controller.currentPosition!.longitude.toStringAsFixed(3)} | '
-                            'Speed: ${controller.currentPosition!.speed.toStringAsFixed(1)} m/s'
-                            : 'No location data available',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  if (controller.locationLogs.isNotEmpty) ...[
-                    const Text(
-                      'Location Logs:',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 10),
-                    ...controller.locationLogs.map(
-                          (log) => Card(
-                        color: Colors.grey.shade200,
-                        child: ListTile(
-                          title: Text(log.requestId),
-                          subtitle: Text(
-                            'Lat: ${log.lat.toStringAsFixed(3)} | '
-                                'Lng: ${log.lng.toStringAsFixed(3)} | '
-                                'Speed: ${log.speed.toStringAsFixed(3)} m/s',
+
+                  // Bottom white section
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1, vertical: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'Live Location:',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 10),
+                        Card(
+                          color: Colors.blue.shade50,
+                          child: ListTile(
+                            title: const Text('Latest Location Data'),
+                            subtitle: Text(
+                              controller.currentPosition != null
+                                  ? 'Lat: ${controller.currentPosition!.latitude.toStringAsFixed(3)} | '
+                                  'Lng: ${controller.currentPosition!.longitude.toStringAsFixed(3)} | '
+                                  'Speed: ${controller.currentPosition!.speed.toStringAsFixed(1)} m/s'
+                                  : 'No location data available',
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 30),
+                        if (controller.locationLogs.isNotEmpty) ...[
+                          const Text(
+                            'Location Logs:',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          ...controller.locationLogs.map(
+                                (log) => Card(
+                              color: Colors.grey.shade200,
+                              child: ListTile(
+                                title: Text(log.requestId),
+                                subtitle: Text(
+                                  'Lat: ${log.lat.toStringAsFixed(3)} | '
+                                      'Lng: ${log.lng.toStringAsFixed(3)} | '
+                                      'Speed: ${log.speed.toStringAsFixed(3)} m/s',
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                  ],
+                  ),
                 ],
               ),
             ),
+
           );
         },
       ),

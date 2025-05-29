@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LocationLog {
   final String requestId;
@@ -16,6 +18,20 @@ class LocationLog {
     required this.lng,
     required this.speed,
   });
+
+  Map<String, dynamic> toJson() => {
+    'requestId': requestId,
+    'lat': lat,
+    'lng': lng,
+    'speed': speed,
+  };
+
+  factory LocationLog.fromJson(Map<String, dynamic> json) => LocationLog(
+    requestId: json['requestId'],
+    lat: json['lat'],
+    lng: json['lng'],
+    speed: json['speed'],
+  );
 }
 
 class LocationController extends ChangeNotifier {
@@ -30,6 +46,7 @@ class LocationController extends ChangeNotifier {
 
   LocationController() {
     _initializeNotifications();
+    loadLogsFromPrefs();
   }
 
   Future<void> _initializeNotifications() async {
@@ -52,7 +69,8 @@ class LocationController extends ChangeNotifier {
       playSound: true,
     );
 
-    const NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
+    const NotificationDetails platformDetails =
+    NotificationDetails(android: androidDetails);
 
     await flutterLocalNotificationsPlugin.show(0, title, body, platformDetails);
   }
@@ -64,10 +82,13 @@ class LocationController extends ChangeNotifier {
       permission = await Geolocator.requestPermission();
     }
 
-    if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location permission granted.')));
+    if (permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Location permission granted.')));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location permission denied.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Location permission denied.')));
     }
   }
 
@@ -75,9 +96,11 @@ class LocationController extends ChangeNotifier {
     final status = await Permission.notification.request();
 
     if (status.isGranted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notification permission granted.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Notification permission granted.')));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notification permission denied.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Notification permission denied.')));
     }
   }
 
@@ -85,11 +108,13 @@ class LocationController extends ChangeNotifier {
     updatingLocation = true;
     notifyListeners();
 
+    await showNotification("Location update started", "Tracking location every 30 seconds");
+
     _timer = Timer.periodic(const Duration(seconds: 30), (_) async {
       await _getLocation();
     });
 
-    await _getLocation(); // Get the first location immediately
+    await _getLocation(); // Initial call
   }
 
   Future<void> _getLocation() async {
@@ -99,7 +124,7 @@ class LocationController extends ChangeNotifier {
 
     currentPosition = position;
 
-    _requestCounter++; // Increment the request number
+    _requestCounter++;
 
     final log = LocationLog(
       requestId: 'Request $_requestCounter',
@@ -109,9 +134,9 @@ class LocationController extends ChangeNotifier {
     );
 
     locationLogs.insert(0, log);
-
     notifyListeners();
 
+    await saveLogsToPrefs();
     await showNotification("Location Update", "Lat: ${log.lat}, Lng: ${log.lng}");
   }
 
@@ -119,5 +144,23 @@ class LocationController extends ChangeNotifier {
     _timer?.cancel();
     updatingLocation = false;
     notifyListeners();
+    showNotification("Location update stopped", "Tracking stopped");
+  }
+
+  Future<void> saveLogsToPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> jsonLogs =
+    locationLogs.map((log) => json.encode(log.toJson())).toList();
+    await prefs.setStringList('location_logs', jsonLogs);
+  }
+
+  Future<void> loadLogsFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String>? jsonLogs = prefs.getStringList('location_logs');
+    if (jsonLogs != null) {
+      locationLogs =
+          jsonLogs.map((e) => LocationLog.fromJson(json.decode(e))).toList();
+      notifyListeners();
+    }
   }
 }
